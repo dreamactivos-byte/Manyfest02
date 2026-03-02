@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+
+  <head>
+    <meta charset="UTF-8">
+    <title>Manyfest01</title>
+    
+
+  </head>
+    
+  <body>
+  <html lang="pt">
+<head>
+<meta charset="UTF-8">
+<title>MicroTarefas</title>
+
+<style>
+body{
+  font-family: Arial, sans-serif;
+  background:#f4f6f9;
+  margin:0;
+  padding:0;
+}
+
+header{
+  background:#1e88e5;
+  color:white;
+  padding:15px;
+  text-align:center;
+}
+
+#saldo{
+  font-size:18px;
+  margin-top:5px;
+}
+
+.task{
+  background:white;
+  margin:15px auto;
+  padding:15px;
+  width:90%;
+  max-width:500px;
+  border-radius:8px;
+  box-shadow:0 2px 5px rgba(0,0,0,0.1);
+  text-align:center;
+}
+
+.task button{
+  padding:8px 15px;
+  margin-top:10px;
+  cursor:pointer;
+}
+
+.ad{
+  margin:10px auto;
+  width:90%;
+  max-width:500px;
+  min-height:80px;
+  background:#e0e0e0;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+
+#taskPage{
+  display:none;
+  padding:20px;
+  text-align:center;
+}
+
+#timer{
+  font-size:28px;
+  margin:10px;
+  color:red;
+}
+
+#completeBtn{
+  padding:10px 20px;
+  font-size:16px;
+  margin-top:20px;
+  cursor:pointer;
+}
+</style>
+</head>
+
+<body>
+
+<header>
+  <h1>Manyfest01</h1>
+  <div id="saldo">Pontos: 0</div>
+</header>
+
+<div id="mainPage"></div>
+
+<div id="taskPage">
+  <h2 id="taskTitle"></h2>
+  <div id="timer"></div>
+  <div id="taskContent"></div>
+  <button id="completeBtn" disabled>Concluir Tarefa</button>
+</div>
+
+<script>
+let pontos = parseInt(localStorage.getItem("pontos")) || 0;
+const saldoElement = document.getElementById("saldo");
+saldoElement.innerText = "Pontos: " + pontos;
+
+const mainPage = document.getElementById("mainPage");
+const taskPage = document.getElementById("taskPage");
+const completeBtn = document.getElementById("completeBtn");
+
+let contadorInterval = null;
+
+// ===== CRIAR 50 TAREFAS =====
+for(let i=1;i<=50;i++){
+
+  let taskDiv = document.createElement("div");
+  taskDiv.className="task";
+
+  let titulo = (i===50)
+    ? "Tarefa 50 – Faça um comentário"
+    : "Tarefa "+i+" – Responda a pesquisa";
+
+  taskDiv.innerHTML = `
+    <h3>${titulo}</h3>
+    <button onclick="abrirTarefa(${i})">Começar</button>
+  `;
+
+  mainPage.appendChild(taskDiv);
+
+  let adDiv = document.createElement("div");
+  adDiv.className="ad";
+
+  if(i<=10){
+    adDiv.innerHTML="ANÚNCIO FORMATO 1 (cole seu script aqui)";
+  }else if(i<=20){
+    adDiv.innerHTML="ANÚNCIO FORMATO 2 (cole seu script aqui)";
+  }else if(i<=30){
+    adDiv.innerHTML="ANÚNCIO FORMATO 3 (cole seu script aqui)";
+  }else if(i<=40){
+    adDiv.innerHTML="ANÚNCIO FORMATO 4 (cole seu script aqui)";
+  }else{
+    adDiv.innerHTML="ANÚNCIO FORMATO 1 (cole seu script aqui)";
+  }
+
+  mainPage.appendChild(adDiv);
+}
+
+// ===== ABRIR TAREFA =====
+function abrirTarefa(numero){
+
+  mainPage.style.display="none";
+  taskPage.style.display="block";
+
+  const title = document.getElementById("taskTitle");
+  const content = document.getElementById("taskContent");
+  const timerElement = document.getElementById("timer");
+
+  completeBtn.disabled=true;
+
+  // Limpa contador antigo se existir
+  if(contadorInterval){
+    clearInterval(contadorInterval);
+  }
+
+  if(numero===50){
+
+    title.innerText="Tarefa 50 – Faça um comentário";
+    timerElement.innerText="";
+    content.innerHTML=`
+      <p>Clique no link abaixo e faça um comentário:</p>
+      <a href="COLE_AQUI_SEU_LINK" target="_blank">Ir para o site</a>
+    `;
+
+    completeBtn.disabled=false;
+
+  }else{
+
+    title.innerText="Tarefa "+numero+" – Responda a pesquisa";
+    content.innerHTML=`
+      <p>Você gosta de tecnologia?</p>
+      <input type="radio" name="resp"> Sim
+      <input type="radio" name="resp"> Não
+    `;
+
+    let tempo=60;
+    timerElement.innerText=tempo;
+
+    contadorInterval=setInterval(()=>{
+      tempo--;
+      timerElement.innerText=tempo;
+
+      if(tempo<=0){
+        clearInterval(contadorInterval);
+        completeBtn.disabled=false;
+      }
+    },1000);
+  }
+}
+
+// ===== BOTÃO CONCLUIR =====
+completeBtn.addEventListener("click", function(){
+
+  pontos += 800;
+  localStorage.setItem("pontos", pontos);
+  saldoElement.innerText = "Pontos: " + pontos;
+
+  // Volta para página principal
+  taskPage.style.display="none";
+  mainPage.style.display="block";
+
+});
+</script>
+
+</body>
+</html>
+    
+  </body>
+  
+</html>
