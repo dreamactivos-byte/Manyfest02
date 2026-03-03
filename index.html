@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+
+  <head>
+    <meta charset="UTF-8">
+    <title>Manyfest02.1</title>
+    
+
+  </head>
+    
+  <body>
+  <html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Microtarefas + Anúncios</title>
+<style>
+body { font-family: Arial, sans-serif; background:#f4f6f9; margin:0; padding:20px; }
+.container { max-width:800px; margin:0 auto; }
+header { text-align:center; margin-bottom:30px; }
+header h1 { font-size:2em; margin-bottom:10px; }
+.score-board { background:#fff; padding:10px 20px; border-radius:50px; display:inline-block; font-weight:bold; }
+.task-card { background:#fff; border-radius:10px; margin-bottom:10px; overflow:hidden; box-shadow:0 3px 10px rgba(0,0,0,0.1); }
+.task-header { padding:15px; cursor:pointer; display:flex; justify-content:space-between; align-items:center; background:#e0e0e0; }
+.task-content { max-height:0; overflow:hidden; transition:max-height 0.5s ease, padding 0.5s ease; background:#fafafa; padding:0 15px; }
+.task-content.active { max-height:500px; padding:15px; }
+.option-btn { margin:5px; padding:8px 15px; border:1px solid #1e88e5; border-radius:25px; background:#fff; color:#1e88e5; cursor:pointer; }
+.option-btn.selected { background:#1e88e5; color:#fff; }
+.complete-btn { width:100%; padding:12px; margin-top:10px; border:none; border-radius:10px; background:#4CAF50; color:#fff; font-weight:bold; cursor:pointer; opacity:0.5; pointer-events:none; }
+.complete-btn.active { opacity:1; pointer-events:all; }
+.ad-box { margin:10px 0; padding:10px; border:2px dashed #6c757d; border-radius:10px; text-align:center; min-height:120px; display:flex; flex-direction:column; justify-content:center; align-items:center; }
+.ad-label { font-size:0.8em; margin-bottom:5px; color:#333; font-weight:bold; text-transform:uppercase; }
+.completed { opacity:0.7; }
+</style>
+</head>
+<body>
+<div class="container">
+    <header>
+        <h1>🎯 Microtarefas</h1>
+        <div class="score-board">Saldo: <span id="totalPoints">0.000</span> pts</div>
+    </header>
+    <div id="taskList"></div>
+</div>
+
+<script>
+(function(){
+    const TOTAL_TASKS = 20;
+    const POINTS_PER_TASK = 0.200;
+    const TIMER_SECONDS = 60;
+
+    const perguntas = [
+        "Você gosta de tecnologia?",
+        "Você utiliza redes sociais diariamente?",
+        "Você prefere Android ou iOS?",
+        "Você trabalha home office?",
+        "Você gosta de ler notícias online?",
+        "Você assiste séries regularmente?",
+        "Você pratica exercícios físicos?",
+        "Você prefere café ou chá?",
+        "Você utiliza transporte público?",
+        "Você gosta de cozinhar?",
+        "Você tem animais de estimação?",
+        "Você viaja pelo menos uma vez por ano?",
+        "Você prefere praia ou montanha?",
+        "Você utiliza aplicativos de delivery?",
+        "Você joga videogames?",
+        "Você prefere filmes ou documentários?",
+        "Você utiliza streaming de música?",
+        "Você tem conta em banco digital?",
+        "Você compra online frequentemente?"
+    ];
+
+    const anunciosTipos = ['A','B','C','D'];
+    const anunciosSequencia = [];
+    for(let i=0;i<5;i++){ anunciosSequencia.push(...anunciosTipos); }
+
+    let userPoints = parseFloat(localStorage.getItem('userPoints')) || 0;
+    let completedTasks = JSON.parse(localStorage.getItem('completedTasks')) || [];
+    let activeTimers = {};
+    const taskListEl = document.getElementById('taskList');
+
+    for(let i=1;i<=TOTAL_TASKS;i++){
+        const taskCard = document.createElement('div');
+        taskCard.className = 'task-card';
+        taskCard.id = 'task-'+i;
+
+        // Header
+        const taskHeader = document.createElement('div');
+        taskHeader.className = 'task-header';
+        taskHeader.innerHTML = `<span>${i<TOTAL_TASKS?'🔍 Tarefa '+i+' - Pesquisa':'📝 Tarefa 20 - Comentário'}</span>`;
+        taskHeader.onclick = ()=>{ taskContent.classList.toggle('active'); };
+        taskCard.appendChild(taskHeader);
+
+        // Content
+        const taskContent = document.createElement('div');
+        taskContent.className = 'task-content';
+
+        if(i<TOTAL_TASKS){
+            const questionSection = document.createElement('div');
+            questionSection.innerHTML = `<p>${perguntas[i-1]}</p>`;
+            const optionsDiv = document.createElement('div');
+            ['Sim','Não','Às vezes'].forEach(opt=>{
+                const btn = document.createElement('button');
+                btn.className='option-btn';
+                btn.innerText=opt;
+                btn.onclick = ()=>{ selectOption(i,opt,btn); };
+                optionsDiv.appendChild(btn);
+            });
+            questionSection.appendChild(optionsDiv);
+            taskContent.appendChild(questionSection);
+
+            const timerSection = document.createElement('div');
+            timerSection.id = 'timer-'+i;
+            timerSection.style.display='none';
+            timerSection.innerHTML = `<p id="timer-display-${i}">${TIMER_SECONDS}</p>`;
+            taskContent.appendChild(timerSection);
+        } else {
+            const commentSection = document.createElement('div');
+            commentSection.innerHTML = `<a href="https://google.com" target="_blank" onclick="handleCommentClick(${i})">Ir comentar</a>`;
+            taskContent.appendChild(commentSection);
+        }
+
+        const btn = document.createElement('button');
+        btn.className='complete-btn';
+        btn.id='btn-'+i;
+        btn.innerText='✓ Concluir Tarefa';
+        btn.onclick = ()=>completeTask(i);
+        taskContent.appendChild(btn);
+
+        taskCard.appendChild(taskContent);
+        taskListEl.appendChild(taskCard);
+
+        // ANÚNCIO apenas abaixo da tarefa
+        const adBox = document.createElement('div');
+        adBox.className='ad-box';
+        const tipo = anunciosSequencia[i-1];
+        adBox.innerHTML = `<div class="ad-label">ANÚNCIO ${i} - Tipo ${tipo}</div>`;
+        taskListEl.appendChild(adBox);
+
+        let script = document.createElement('script');
+        switch(tipo){
+            case 'A': script.src="https://pl28828555.effectivegatecpm.com/99/54/f0/9954f05d825c4ebde4448f7e5f0c470c.js"; break;
+            case 'B': script.async=true; script.setAttribute('data-cfasync','false'); script.src="https://pl28828560.effectivegatecpm.com/a8c1d65b3da67af87fbbe356fc7d7888/invoke.js"; break;
+            case 'C': script.src="https://pl28828583.effectivegatecpm.com/45/24/2b/45242b42ba986d5741bbe72c83686272.js"; break;
+            case 'D': script.src="https://pl28828583.effectivegatecpm.com/45/24/2b/45242b42ba986d5741bbe72c83686272.js"; break;
+        }
+        adBox.appendChild(script);
+    }
+
+    window.selectOption = function(taskId,opt,btn){
+        document.querySelectorAll('#task-'+taskId+' .option-btn').forEach(b=>b.classList.remove('selected'));
+        btn.classList.add('selected');
+        if(!activeTimers[taskId]) startTimer(taskId);
+    };
+
+    function startTimer(taskId){
+        const timerSection = document.getElementById('timer-'+taskId);
+        const timerDisplay = document.getElementById('timer-display-'+taskId);
+        const btn = document.getElementById('btn-'+taskId);
+        timerSection.style.display='block';
+        let seconds=TIMER_SECONDS;
+        activeTimers[taskId]=setInterval(()=>{
+            seconds--;
+            timerDisplay.innerText=seconds;
+            if(seconds<=0){
+                clearInterval(activeTimers[taskId]);
+                delete activeTimers[taskId];
+                btn.classList.add('active');
+            }
+        },1000);
+    }
+
+    window.handleCommentClick=function(taskId){
+        const btn=document.getElementById('btn-'+taskId);
+        btn.classList.add('active');
+    };
+
+    window.completeTask=function(taskId){
+        const btn=document.getElementById('btn-'+taskId);
+        if(!btn.classList.contains('active')) return alert('Complete a tarefa antes!');
+        if(completedTasks.includes(taskId)) return alert('Tarefa já concluída!');
+        userPoints+=POINTS_PER_TASK;
+        localStorage.setItem('userPoints',userPoints);
+        document.getElementById('totalPoints').innerText=userPoints.toFixed(3);
+        completedTasks.push(taskId);
+        localStorage.setItem('completedTasks',JSON.stringify(completedTasks));
+        document.getElementById('task-'+taskId).classList.add('completed');
+        btn.innerText='✓ Concluída';
+    };
+
+    document.getElementById('totalPoints').innerText=userPoints.toFixed(3);
+})();
+</script>
+</body>
+</html>
+    
+  </body>
+  
+</html>
